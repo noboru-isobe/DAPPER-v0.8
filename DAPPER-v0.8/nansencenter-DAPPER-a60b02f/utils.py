@@ -326,10 +326,8 @@ class NNPredictor:
 			patience=self.patience, verbose=1, mode='auto',restore_best_weights=True)
 		self._tmodel.compile(optimizer=self.optimizer,loss=weighted_mse)
 		self.hist = self._tmodel.fit(xtrain, ytrain,
-			epochs=self.Nepochs,
-			batch_size=self._batchsize,
-			verbose=self._verbfit,
-			validation_data=validation_data, callbacks=[early_stopping])
+			epochs=1,
+			verbose=self._verbfit)
 		if self.finetuning:
 			if self.check_finetuning():
 				if self.npred>1: #Only tune using the t+1 target
@@ -730,10 +728,10 @@ def plot_L96_2D(xx,xxpred,tt,labels,vmin=None,vmax=None,vdelta=None):
 		cax [i] = divider[i].append_axes('right', size='5%', pad=0.05)
 
 	delta= dict()
-	delta[0] = ax[0].imshow(xx.T,cmap=plt.get_cmap('viridis'),vmin=vmin,vmax =vmax,extent=[tmin,tmax,0,m],aspect='auto')
-	delta[1] = ax[1].imshow(xxpred.T,cmap=plt.get_cmap('viridis'),vmin=vmin,vmax=vmax,extent=[tmin,tmax,0,m],aspect='auto')
+	delta[0] = ax[0].imshow(xx.T,cmap=plt.get_cmap('viridis'),vmin=vmin,vmax =vmax,extent=[tmin,tmax,0,m],aspect='auto',interpolation='bicubic')
+	delta[1] = ax[1].imshow(xxpred.T,cmap=plt.get_cmap('viridis'),vmin=vmin,vmax=vmax,extent=[tmin,tmax,0,m],aspect='auto',interpolation='bicubic')
 	delta[2] = ax[2].imshow(xxpred.T- xx.T,cmap=plt.get_cmap('bwr'),
-		extent=[tmin,tmax,0,m],aspect='auto',vmin=-vdelta,vmax=vdelta)
+		extent=[tmin,tmax,0,m],aspect='auto',vmin=-vdelta,vmax=vdelta,interpolation='bicubic')
 	ax[0].set_ylabel(labels[0])
 	ax[1].set_ylabel(labels[1])
 	ax[2].set_ylabel(labels[1][:2] + ' - ' + labels[0][:2] )

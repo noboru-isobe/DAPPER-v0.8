@@ -69,7 +69,7 @@ param_nn = {'archi': ((24, 5, 'relu', 0.0), (37, 5, 'relu', 0.0)),  # CNN layer 
 	'finetuning': False,  # Deactivate a finetuning of the last layer after optimization
 	'npred': 1,  # Number of forecast time step in the loss function
 	'Nepochs': nepochs,  # Number of epochs
-	'batch_size': 2  # Batchsize during the training
+	'batch_size': 128  # Batchsize during the training
 }
 nn = NNPredictor(m, **param_nn)
 
