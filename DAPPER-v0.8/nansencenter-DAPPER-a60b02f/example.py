@@ -4,7 +4,7 @@ from common import simulate, Chronology
 from da_methods import EnKF_N
 
 from utils import setup as setup_lorenz
-from utils import simulate_ens, NNPredictor, SetupBuilder, plot_L96_2D
+from utils import simulate_ens, NNPredictor, SetupBuilder, plot_L96_2D, plot_L96_line
 
 #################
 # General Setup #
@@ -14,16 +14,18 @@ p = 20  # Number of obs at each time step (50%)
 std_m = 0.1  # standard deviation of model noise
 std_o = 1.  # standard devation of observational noise
 
-ncycle = 40  # Number of cycles
-nepochs_init = 40 # Number of epochs for initializing the weights
-nepochs = 20 # Number of epochs during training in a cycle
-Texpe = 2000 # Length of the experiment in model time unit
+#ncycle = 40  # Number of cycles
+#nepochs_init = 40 # Number of epochs for initializing the weights
+#nepochs = 20 # Number of epochs during training in a cycle
+#Texpe = 2000 # Length of the experiment in model time unit
+#ntrain= int(0.8 * Texpe)
 
 # To reduce the time needed to run the experiment (with less accurate results) uncomment the following lines:
-# ncycle = 2
-# nepochs_init = 10
-# nepochs = 5
-# Texpe = 500
+ncycle = 2
+nepochs_init = 10
+nepochs = 5
+Texpe = 500
+ntrain= int(0.8 * Texpe)
 
 datadir = 'example_data'  # Directory where to save the results
 ######################
@@ -69,6 +71,7 @@ param_nn = {'archi': ((24, 5, 'relu', 0.0), (37, 5, 'relu', 0.0)),  # CNN layer 
 	'finetuning': False,  # Deactivate a finetuning of the last layer after optimization
 	'npred': 1,  # Number of forecast time step in the loss function
 	'Nepochs': nepochs,  # Number of epochs
+	'Ntrain': ntrain,  # Number of tsteps for training
 	'batch_size': 128  # Batchsize during the training
 }
 nn = NNPredictor(m, **param_nn)
@@ -151,7 +154,18 @@ xsim_true      = simulate_ens(setup_true, Xinit=x0)
 xsim_surrogate = simulate_ens(setup, Xinit=x0)
 
 # plot
-fig = plot_L96_2D(xsim_true, xsim_surrogate, 1.67*setup_true.t.tt, labels=['True','Surrogate'])
-
+fig = plot_L96_2D(xsim_true, xsim_surrogate, 1.67*setup_true.t.tt, labels=['True','Surrogate'],vmin=-5.0,vmax=10.0,vdelta=6.0)
 # save fig
-fig.savefig(os.path.join(datadir, 'simulation.png'))
+fig.savefig(os.path.join(datadir, 'plot.png'))
+
+# plot
+for ele in range(0,m,4):
+  fig = plot_L96_line(xsim_true, xsim_surrogate, 1.67*setup_true.t.tt, labels=['True','Surrogate'],vmin=-5.0,vmax=10.0,vdelta=6.0, element=ele)
+# save fig
+  fig.savefig(os.path.join(datadir, 'line_'+str(ele).zfill(2)+'.png'))
+
+
+# plot Loss
+fig = nn.plot_history()
+# save fig
+fig.savefig(os.path.join(datadir, 'hist.png'))# plot

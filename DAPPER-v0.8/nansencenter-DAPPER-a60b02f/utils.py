@@ -323,10 +323,12 @@ class NNPredictor:
 		else:
 			validation_data = None
 		early_stopping = EarlyStopping(monitor='val_loss',
-			patience=self.patience, verbose=1, mode='auto',restore_best_weights=True)
+		patience=self.patience, verbose=1, mode='auto',restore_best_weights=True)
 		self._tmodel.compile(optimizer=self.optimizer,loss=weighted_mse)
 		self.hist = self._tmodel.fit(xtrain, ytrain,
-			epochs=1,
+			validation_data = validation_data, 
+#			epochs=1,
+			epochs=self._Nepochs,
 			verbose=self._verbfit)
 		if self.finetuning:
 			if self.check_finetuning():
@@ -719,7 +721,8 @@ def plot_L96_2D(xx,xxpred,tt,labels,vmin=None,vmax=None,vdelta=None):
 	m = xx.shape[1]
 	tmin = tt[0]
 	tmax = tt[-1]
-	fig,ax = plt.subplots(nrows=3,sharex='all')
+#	fig,ax = plt.subplots(nrows=3,sharex='all')
+	fig,ax = plt.subplots(nrows=4,sharex='all')
 
 	divider = [make_axes_locatable(a) for a in ax]
 
@@ -730,13 +733,55 @@ def plot_L96_2D(xx,xxpred,tt,labels,vmin=None,vmax=None,vdelta=None):
 	delta= dict()
 	delta[0] = ax[0].imshow(xx.T,cmap=plt.get_cmap('viridis'),vmin=vmin,vmax =vmax,extent=[tmin,tmax,0,m],aspect='auto',interpolation='bicubic')
 	delta[1] = ax[1].imshow(xxpred.T,cmap=plt.get_cmap('viridis'),vmin=vmin,vmax=vmax,extent=[tmin,tmax,0,m],aspect='auto',interpolation='bicubic')
-	delta[2] = ax[2].imshow(xxpred.T- xx.T,cmap=plt.get_cmap('bwr'),
-		extent=[tmin,tmax,0,m],aspect='auto',vmin=-vdelta,vmax=vdelta,interpolation='bicubic')
+	delta[2] = ax[2].imshow(xxpred.T- xx.T,cmap=plt.get_cmap('bwr'),extent=[tmin,tmax,0,m],aspect='auto',vmin=-vdelta,vmax=vdelta,interpolation='bicubic')
+	xdif=xxpred-xx
+	xrmse=sqrt(mean(xdif**2,axis=1))
+	ax[3].set_ylim(0.,vdelta)
+	ax[3].plot(tt,xrmse)
+
+
 	ax[0].set_ylabel(labels[0])
 	ax[1].set_ylabel(labels[1])
 	ax[2].set_ylabel(labels[1][:2] + ' - ' + labels[0][:2] )
-	for i in delta:
+	ax[3].set_ylabel('RMSE')
+	for i in range(3):
 		fig.colorbar(delta[i],cax=cax[i],orientation='vertical')
-	ax[2].set_xlabel('time')
+	ax[3].set_xlabel('time')
+	return fig
+
+def plot_L96_line(xx,xxpred,tt,labels,vmin=None,vmax=None,vdelta=None, element=0):
+	"""
+	plot two simulation (xx, xxpred, and the difference xpred-xx)
+	:param xx: first simulation to plot (size: size of the space, number of time steps)
+	:param xxpred: second simulation to plot (size: size of the space, number of time steps)
+	:param tt: chronology (used for x-axis)
+	:param labels: list of two labels [first simulation, second simulation)
+	:param vmin: minimum value of the first two plots
+	:param vmax: minimum value of the first two plots
+	:param vdelta: extreme value of the difference plot
+	:return: a matplotlib figure
+	"""
+	if vmin is None:
+		vmin,vmax = np.nanmin(xx),np.nanmax(xx)
+	if vdelta is None:
+		vdelta = np.nanmax(np.abs(xxpred-xx))
+	m = xx.shape[1]
+	tmin = tt[0]
+	tmax = tt[-1]
+	fig,ax = plt.subplots(nrows=2,sharex='all')
+
+	ax[0].set_ylim(vmin,vmax)
+	ax[0].plot(tt,xx[:,element],label=labels[0])
+	ax[0].plot(tt,xxpred[:,element],label=labels[1])
+	ax[0].legend(loc='upper right')
+
+	xdif=xxpred-xx
+	xrmse=sqrt(mean(xdif**2,axis=1))
+	ax[1].set_ylim(0.,vdelta)
+	ax[1].plot(tt,xrmse)
+
+	ax[0].set_ylabel('X '+str(element))
+	ax[1].set_ylabel('RMSE')
+	ax[1].set_xlabel('time')
 	return fig
 
